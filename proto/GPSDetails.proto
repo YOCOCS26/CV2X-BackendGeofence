@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option java_package = "protobuf";
+
+option java_outer_classname = "GPSDetails";
+
+message GPSData{
+	string id = 1;
+	int32 vehicle_type = 2;
+    uint64 timestamp = 3;
+    double latitude = 4;
+    double longitude = 5;
+    double altitude = 6;
+    double speed = 7;
+    double bearing = 8;
+    double accuracy = 9;   
+    string provider = 10;
+    int32 satellites_used = 11;
+    int32 satellites_in_view = 12;
+	string imei = 13;
+	string ssid = 14;
+}

@@ -65,6 +65,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CollisionDetails.cs" />
     <Compile Include="Geofence.cs" />
     <Compile Include="GPSDetails.cs" />
     <Compile Include="Program.cs" />

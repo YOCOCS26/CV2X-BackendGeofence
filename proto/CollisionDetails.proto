@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option java_package = "protobuf";
+
+option java_outer_classname = "CollisionDetails";
+
+message CollisionData{
+    string vehicle_id = 1;
+    string pedestrian_id = 2;
+    int32 collision_status = 3;
+    double distance = 4;
+}

@@ -1,30 +1,22 @@
 <PointsList>
+   <Point>
+    <PointX>1.316696</PointX>
+    <PointY>103.862453</PointY>
+  </Point>
   <Point>
-    <PointX>1.316631</PointX>
-    <PointY>103.862454</PointY>
+    <PointX>1.316709</PointX>
+    <PointY>103.862680</PointY>
   </Point>
-   <Point>
-    <PointX>1.316706</PointX>
-    <PointY>103.862517</PointY>
+  <Point>
+    <PointX>1.316651</PointX>
+    <PointY>103.862748</PointY>
   </Point>
-   <Point>
-    <PointX>1.316714</PointX>
-    <PointY>103.862578</PointY>
+  <Point>
+    <PointX>1.316478</PointX>
+    <PointY>103.862601</PointY>
   </Point>
-   <Point>
-    <PointX>1.316707</PointX>
-    <PointY>103.862653</PointY>
-  </Point>
-   <Point>
-    <PointX>1.316623</PointX>
-    <PointY>103.862652</PointY>
-  </Point>
-   <Point>
-    <PointX>1.316628</PointX>
-    <PointY>103.862588</PointY>
-  </Point>
-   <Point>
-    <PointX>1.316599</PointX>
-    <PointY>103.862525</PointY>
+  <Point>
+    <PointX>1.316593</PointX>
+    <PointY>103.862422</PointY>
   </Point>
 </PointsList>

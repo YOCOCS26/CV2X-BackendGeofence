@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace CV2X_BackendGeofence
 {
-    class Point
+    public class Point
     {
         public double X;
         public double Y;
     }
 
-    class Geofence
+    public class Geofence
     {
         public List<Point> geofencePts = new List<Point>();
 

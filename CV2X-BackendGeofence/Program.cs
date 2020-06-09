@@ -12,7 +12,30 @@ using Google.Protobuf;
 
 namespace CV2X_BackendGeofence
 {
-    class Program
+    public class StaticWrapper
+    {
+        public List<Point> ptHotspot = new List<Point>();
+        public List<Point> ptCar_GoingLeft = new List<Point>();
+        public List<Point> ptCar_GoingRight = new List<Point>();
+        public List<Point> ptCar_GoingStraight = new List<Point>();
+        public List<Point> ptCar_Yellowbox = new List<Point>();
+        public List<Point> ptGoingTrafficIsland = new List<Point>();
+        public List<Point> ptTrafficIsland = new List<Point>();
+        public List<Point> ptCrossing = new List<Point>();
+
+        public void LoadXML()
+        {
+            Program.LoadXml("Car_Going_Left.xml", out ptCar_GoingLeft);
+            Program.LoadXml("Car_Going_Right.xml", out ptCar_GoingRight);
+            Program.LoadXml("Car_Going_Straight.xml", out ptCar_GoingStraight);
+            Program.LoadXml("Yellowbox.xml", out ptCar_Yellowbox);
+            Program.LoadXml("Ped_Going_TrafficIsland.xml", out ptGoingTrafficIsland);
+            Program.LoadXml("Ped_Traffic_Island.xml", out ptTrafficIsland);
+            Program.LoadXml("Pedestrian_Crossing.xml", out ptCrossing);
+        }
+    }
+
+    public class Program
     {
         public static List<Point> ptHotspot = new List<Point>();
         public static List<Point> ptCar_GoingLeft = new List<Point>();
@@ -22,10 +45,13 @@ namespace CV2X_BackendGeofence
         public static List<Point> ptGoingTrafficIsland = new List<Point>();
         public static List<Point> ptTrafficIsland = new List<Point>();
         public static List<Point> ptCrossing = new List<Point>();
-        
-        public static Geofence geofence;
+        public static List<Point> ptUsecase_4A = new List<Point>();
+        public static List<Point> ptUsecase_4B = new List<Point>();
+
+        static Geofence geofence;
         public static GPSData gpsData;
         public static CollisionData collisionData;
+        public static CollisionDetails collisionDetailsV2X;
 
         /***************MQTT Broker Details*******************/
         public static MqttClient client;
@@ -37,7 +63,7 @@ namespace CV2X_BackendGeofence
 
         /***************MQTT Publish Details******************/
         public static string topic = "cv2x";
-
+        public static string collisionTopic = "VehicleCollisionData";
 
         public const int radius = 200;
 
@@ -56,7 +82,7 @@ namespace CV2X_BackendGeofence
             public string Id { get; set; }
         }
 
-        static void LoadXml(string filename, out List<Point> listPts)
+        public static void LoadXml(string filename, out List<Point> listPts)
         {
             DataSet ds = new DataSet();
             ds.ReadXml(filename);
@@ -77,7 +103,7 @@ namespace CV2X_BackendGeofence
             }
         }
 
-        static void InitMQTT()
+        public void InitMQTT()
         {
             try
             {
@@ -91,33 +117,69 @@ namespace CV2X_BackendGeofence
                 if (client.IsConnected)
                 {
                     Console.WriteLine("MQTT server connection is OK, " + host + ",  " + port);
-                    client.Subscribe(new string[] { "RTCU" }, new byte[] { MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE });                    
+                    client.Subscribe(new string[] { "RTCU" }, new byte[] { MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE });
                 }
                 else
                 {
                     Console.WriteLine("MQTT server connection failed");
-                }               
+                }
             }
             catch (Exception ex)
             {
                 Thread.Sleep(1000);
                 Console.WriteLine("Cannot connect to MQTT broker");
                 CancellationTokenSource source = new CancellationTokenSource();
-                Task t = Task.Run(() => TryReconnectAsync(source.Token));               
+                Task t = Task.Run(() => TryReconnectAsync(source.Token));
             }
         }
 
-        private static void CheckCollision()
+        public void CheckCollisionDetails()
         {
-            //check if both the pedestrian & the vehicle is inside the 200m radius Geofence
+            double collisionDistance = getDistance(vehicle.Latitude, vehicle.Longitude, pedestrian.Latitude, pedestrian.Longitude);
+
+            collisionDetailsV2X.AlertType = 1;
+            collisionDetailsV2X.CollisionDetectionFlag = 0;
+            collisionDetailsV2X.TargetVehicleId = pedestrian.Id;
+            collisionDetailsV2X.SourceVehicleId = vehicle.Id;
+            collisionDetailsV2X.DistanceToCollision = collisionDistance;
+            collisionDetailsV2X.CollisionLatitude = pedestrian.Latitude;
+            collisionDetailsV2X.CollisionLongitude = pedestrian.Longitude;
+
+            if (collisionData.CollisionStatus != 0)
+            {
+                if (collisionDistance <= collisionDetailsV2X.AlertBRAKERadius)
+                {
+                    collisionDetailsV2X.CollisionDetectionFlag = 1;
+                    collisionDetailsV2X.AlertType = 4;
+                }
+                else if (collisionDistance <= collisionDetailsV2X.AlertWARNRadius)
+                {
+                    collisionDetailsV2X.CollisionDetectionFlag = 1;
+                    collisionDetailsV2X.AlertType = 3;
+                }
+                else if (collisionDistance <= collisionDetailsV2X.AlertINFORadius)
+                {
+                    collisionDetailsV2X.CollisionDetectionFlag = 1;
+                    collisionDetailsV2X.AlertType = 2;
+                }
+            }        
+
+            client.Publish(collisionTopic, collisionDetailsV2X.ToByteArray(), (byte)0, false);
+        }
+
+        public void CheckCollision()
+        {
+            //check if both the pedestrian & the vehicle is inside the 200m radius Hotspot Zone
             if ((getDistance(ptHotspot.First().X, ptHotspot.First().Y, vehicle.Latitude, vehicle.Longitude) < radius) &&
-                  (getDistance(ptHotspot.First().X, ptHotspot.First().Y, pedestrian.Latitude, pedestrian.Longitude) < radius))            
+                  (getDistance(ptHotspot.First().X, ptHotspot.First().Y, pedestrian.Latitude, pedestrian.Longitude) < radius))
             {
                 //load xml for car geofences
                 LoadXml("Car_Going_Left.xml", out ptCar_GoingLeft);
                 LoadXml("Car_Going_Right.xml", out ptCar_GoingRight);
                 LoadXml("Car_Going_Straight.xml", out ptCar_GoingStraight);
                 LoadXml("Yellowbox.xml", out ptCar_Yellowbox);
+                LoadXml("Car_Usecase_4(a).xml", out ptUsecase_4A);
+                LoadXml("Car_Usecase_4(b).xml", out ptUsecase_4B);
 
                 //check if car is going left
                 if (new Geofence(ptCar_GoingLeft).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
@@ -128,13 +190,13 @@ namespace CV2X_BackendGeofence
 
                     //check if pedestrian is inside the geofence going to traffic island
                     if (new Geofence(ptGoingTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                    {                       
-                        collisionData.CollisionStatus = 1;                      
+                    {
+                        collisionData.CollisionStatus = 1;
                     }
                     //check if pedestrian is inside the traffic island
                     else if (new Geofence(ptTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                    {                       
-                        collisionData.CollisionStatus = 2;                      
+                    {
+                        collisionData.CollisionStatus = 2;
                     }
                 }
                 //check if car is going right, going straight or inside yellowbox
@@ -146,59 +208,63 @@ namespace CV2X_BackendGeofence
                     LoadXml("Ped_Traffic_Island.xml", out ptTrafficIsland);
                     LoadXml("Pedestrian_Crossing.xml", out ptCrossing);
 
-                    //check if car is going right & pedestrian is inside traffic island
-                    if (new Geofence(ptCar_GoingRight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
-                        new Geofence(ptTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                    {                       
-                        collisionData.CollisionStatus = 3;                       
-                    }
                     //check if car is going right & pedestrian is crossing
-                    else if (new Geofence(ptCar_GoingRight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
+                    if (new Geofence(ptCar_GoingRight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
                         new Geofence(ptCrossing).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                    {                     
-                        collisionData.CollisionStatus = 4;                      
+                    {
+                        collisionData.CollisionStatus = 3;
                     }
+
+                    //check if car is going straight and truck is turning left
+                    else if (new Geofence(ptCar_GoingStraight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
+                             new Geofence(ptCar_GoingLeft).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
+                    {
+                        collisionData.CollisionStatus = 4;
+                    }
+
                     //check if car is going straight & pedestrian is inside traffic island
                     else if (new Geofence(ptCar_GoingStraight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
                         new Geofence(ptTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                    {                     
-                        collisionData.CollisionStatus = 5;                       
+                    {
+                        collisionData.CollisionStatus = 5;
                     }
+
                     //check if car is going straight & pedestrian is crossing
                     else if (new Geofence(ptCar_GoingStraight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
                         new Geofence(ptCrossing).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                    {                  
-                        collisionData.CollisionStatus = 6;                    
-                    }
-                    //check if car is inside yellowbox & pedestrian is inside traffic island
-                    else if (new Geofence(ptCar_Yellowbox).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
-                        new Geofence(ptTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                    {                  
-                        collisionData.CollisionStatus = 7;                      
-                    }
-                    //check if car is inside yellowbox & pedestrian is crossing
-                    else if (new Geofence(ptCar_Yellowbox).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
-                        new Geofence(ptCrossing).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                    {                       
-                        collisionData.CollisionStatus = 8;                     
+                    {
+                        collisionData.CollisionStatus = 5;
+                    }                
+                }
+                //check for usecase scenario 4(Truck turning right while vehicle approcahing)
+                else if (new Geofence(ptUsecase_4A).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
+                {
+                    if (new Geofence(ptUsecase_4A).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
+                        new Geofence(ptUsecase_4B).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
+                    {
+                        collisionData.CollisionStatus = 6;
                     }
                 }
+
                 else
-                {                 
-                    collisionData.CollisionStatus = 0;                            
+                {
+                    collisionData.CollisionStatus = 0;
                 }
             }
             else
-            {          
-                collisionData.CollisionStatus = 0;             
+            {
+                collisionData.CollisionStatus = 0;               
             }
+
+            CheckCollisionDetails();       
+
             collisionData.VehicleId = vehicle.Id;
-            collisionData.PedestrianId = pedestrian.Id;            
+            collisionData.PedestrianId = pedestrian.Id;
             collisionData.Distance = getDistance(vehicle.Latitude, vehicle.Longitude, pedestrian.Latitude, pedestrian.Longitude);
-            client.Publish(topic, collisionData.ToByteArray(), (byte)0, false);
+            client.Publish(topic, collisionData.ToByteArray(), (byte)0, false);            
         }
 
-        private static void client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
+        private void client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
         {
             if (String.Equals(e.Topic, "RTCU"))
             {
@@ -281,11 +347,11 @@ namespace CV2X_BackendGeofence
                         }
                     }
 
-                    else if (gpsData.VehicleType == 1)       //pedestrian
+                    else if (gpsData.VehicleType == 3)       //pedestrian
                     {
                         pedestrian.Latitude = gpsData.Latitude;
                         pedestrian.Longitude = gpsData.Longitude;
-                        pedestrian.Id = gpsData.Id;                       
+                        pedestrian.Id = gpsData.Id;
 
                         if (getDistance(ptHotspot[0].X, ptHotspot[0].Y, pedestrian.Latitude, pedestrian.Longitude) < radius)
                         {
@@ -352,8 +418,8 @@ namespace CV2X_BackendGeofence
                                 {
                                 }
                             }
-                        }                      
-                    }                   
+                        }
+                    }
                     var msg = "IN";
                     var mClient = sender as MqttClient;
 
@@ -366,7 +432,7 @@ namespace CV2X_BackendGeofence
             }
         }
 
-        private static void client_MqttMsgPublishReceived2(object sender, MqttMsgPublishEventArgs e)
+        private void client_MqttMsgPublishReceived2(object sender, MqttMsgPublishEventArgs e)
         {
             if (String.Equals(e.Topic, "RTCU"))
             {
@@ -379,7 +445,7 @@ namespace CV2X_BackendGeofence
                     vehicle.Id = gpsData.Id;
                     mqttCarCntr = 0;
                 }
-                else if (gpsData.Id == "pedestrian")
+                else if (gpsData.Id == "pedestrian" || gpsData.VehicleType == 4)
                 {
                     pedestrian.Latitude = gpsData.Latitude;
                     pedestrian.Longitude = gpsData.Longitude;
@@ -395,26 +461,26 @@ namespace CV2X_BackendGeofence
                     Console.WriteLine("Collision Details-- Vehicle ID: " + vehicle.Id + ", Pedestrian ID: " + pedestrian.Id + ", Collision Status: " + collisionData.CollisionStatus + ", Distance: " + collisionData.Distance);
                     vehicle.Id = null;
                     pedestrian.Id = null;
-                    loopCntr = 0;                
+                    loopCntr = 0;
                 }
             }
         }
 
-        private static void client_ConnectionClosed(object sender, EventArgs e)
+        private void client_ConnectionClosed(object sender, EventArgs e)
         {
             Console.WriteLine("Disconnected to MQTT Broker");
             CancellationTokenSource source = new CancellationTokenSource();
             Task t = Task.Run(() => TryReconnectAsync(source.Token));
         }
 
-        private static async Task TryReconnectAsync(CancellationToken cancellationToken)
+        private async Task TryReconnectAsync(CancellationToken cancellationToken)
         {
             var connected = client.IsConnected;
             while (!connected && !cancellationToken.IsCancellationRequested)
             {
                 Console.WriteLine("Trying to connect to MQTT Broker");
                 try
-                {                    
+                {
                     client.Connect(Guid.NewGuid().ToString(), username, password);
                     client.MqttMsgPublishReceived += new MqttClient.MqttMsgPublishEventHandler(client_MqttMsgPublishReceived2);
                     client.ConnectionClosed += new MqttClient.ConnectionClosedEventHandler(client_ConnectionClosed);
@@ -430,10 +496,10 @@ namespace CV2X_BackendGeofence
                 }
                 connected = client.IsConnected;
                 await Task.Delay(1000, cancellationToken);
-            }           
+            }
         }
 
-        static void InitProtobuf()
+        public void InitProtobuf()
         {
             gpsData = new GPSData();
             gpsData.Timestamp = 0;
@@ -457,6 +523,20 @@ namespace CV2X_BackendGeofence
             collisionData.CollisionStatus = 0;
             collisionData.Distance = 0;
 
+            collisionDetailsV2X = new CollisionDetails();
+            collisionDetailsV2X.AbsCollisionTime = 0;
+            collisionDetailsV2X.AlertBRAKERadius = 10;
+            collisionDetailsV2X.AlertWARNRadius = 20;
+            collisionDetailsV2X.AlertINFORadius = 30;
+            collisionDetailsV2X.AlertType = 0;
+            collisionDetailsV2X.CollisionAltitude = 0;
+            collisionDetailsV2X.CollisionDetectionFlag = 0;
+            collisionDetailsV2X.CollisionLatitude = 0;
+            collisionDetailsV2X.CollisionLongitude = 0;
+            collisionDetailsV2X.DistanceToCollision = 0;
+            collisionDetailsV2X.SourceVehicleId = "";
+            collisionDetailsV2X.TargetVehicleId = "";
+
             vehicle = new GeoLocation();
             vehicle.Latitude = 0;
             vehicle.Longitude = 0;
@@ -467,7 +547,7 @@ namespace CV2X_BackendGeofence
             pedestrian.Id = null;
         }
 
-        static void InitTimer()
+        public void InitTimer()
         {
             tmr = new System.Timers.Timer(1000);
             tmr.AutoReset = true;
@@ -475,7 +555,7 @@ namespace CV2X_BackendGeofence
             tmr.Enabled = true;
         }
 
-        private static void Tmr_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private void Tmr_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             try
             {
@@ -489,7 +569,7 @@ namespace CV2X_BackendGeofence
                 else if (mqttPedCntr > 5)
                 {
                     Console.WriteLine("Loop: " + loopCntr++ + " ------waiting for pedestrian data from MQTT------");
-                }               
+                }
             }
             catch (Exception ex)
             {
@@ -498,7 +578,7 @@ namespace CV2X_BackendGeofence
             }
         }
 
-        public static double getDistance(double lat1, double lon1, double lat2, double lon2)
+        public double getDistance(double lat1, double lon1, double lat2, double lon2)
         {
             var R = 6371;
             var dLat = ToRad(lat2 - lat1);
@@ -512,18 +592,19 @@ namespace CV2X_BackendGeofence
             return d;
         }
 
-        public static double ToRad(double deg)
+        public double ToRad(double deg)
         {
             return deg * (Math.PI / 180);
         }
 
         static void Main(string[] args)
         {
-            LoadXml("Hotspot.xml",out ptHotspot);
-            InitProtobuf();
-            InitMQTT();
-            while (!client.IsConnected) ;       
-            InitTimer();
+            LoadXml("Hotspot.xml", out ptHotspot);
+            Program p = new Program();
+            p.InitProtobuf();
+            p.InitMQTT();
+            while (!client.IsConnected) ;
+            p.InitTimer();
 
             for (;;)
             {

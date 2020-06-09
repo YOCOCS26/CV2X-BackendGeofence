@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option java_package = "com.conti.v2x_project.Proto";
+
+option java_outer_classname = "CollisionDetailsProto";
+
+// Please refer to documentation for all fields 
+message CollisionDetails {
+	int32 collision_detection_flag = 1;
+	int32 alert_type = 2;
+	string source_vehicle_id = 3;
+	string target_vehicle_id = 4;
+	double alert_INFO_radius = 5;
+	double alert_WARN_radius = 6;
+	double alert_BRAKE_radius = 7;
+	double collision_latitude = 8;
+	double collision_longitude = 9;
+	double collision_altitude = 10;
+	double distance_to_collision = 11;
+	uint64 abs_collision_time = 12;
+	uint64 timestamp_ms = 13;
+}

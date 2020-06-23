@@ -18,20 +18,20 @@ namespace CV2X_BackendGeofence
         public List<Point> ptCar_GoingLeft = new List<Point>();
         public List<Point> ptCar_GoingRight = new List<Point>();
         public List<Point> ptCar_GoingStraight = new List<Point>();
-        public List<Point> ptCar_Yellowbox = new List<Point>();
         public List<Point> ptGoingTrafficIsland = new List<Point>();
         public List<Point> ptTrafficIsland = new List<Point>();
         public List<Point> ptCrossing = new List<Point>();
+        public List<Point> ptTruck_GoingStraight = new List<Point>();
 
         public void LoadXML()
         {
-            Program.LoadXml("Car_Going_Left.xml", out ptCar_GoingLeft);
-            Program.LoadXml("Car_Going_Right.xml", out ptCar_GoingRight);
-            Program.LoadXml("Car_Going_Straight.xml", out ptCar_GoingStraight);
-            Program.LoadXml("Yellowbox.xml", out ptCar_Yellowbox);
-            Program.LoadXml("Ped_Going_TrafficIsland.xml", out ptGoingTrafficIsland);
-            Program.LoadXml("Ped_Traffic_Island.xml", out ptTrafficIsland);
-            Program.LoadXml("Pedestrian_Crossing.xml", out ptCrossing);
+            Program.LoadXml("Science Park/Car_Going_Left.xml", out ptCar_GoingLeft);
+            Program.LoadXml("Science Park/Car_Going_Right.xml", out ptCar_GoingRight);
+            Program.LoadXml("Science Park/Car_Going_Straight.xml", out ptCar_GoingStraight);
+            Program.LoadXml("Science Park/Ped_Going_TrafficIsland.xml", out ptGoingTrafficIsland);
+            Program.LoadXml("Science Park/Ped_Traffic_Island.xml", out ptTrafficIsland);
+            Program.LoadXml("Science Park/Ped_Crossing.xml", out ptCrossing);
+            Program.LoadXml("Science Park/Truck_Going_Straight.xml", out ptTruck_GoingStraight);
         }
     }
 
@@ -41,12 +41,10 @@ namespace CV2X_BackendGeofence
         public static List<Point> ptCar_GoingLeft = new List<Point>();
         public static List<Point> ptCar_GoingRight = new List<Point>();
         public static List<Point> ptCar_GoingStraight = new List<Point>();
-        public static List<Point> ptCar_Yellowbox = new List<Point>();
         public static List<Point> ptGoingTrafficIsland = new List<Point>();
         public static List<Point> ptTrafficIsland = new List<Point>();
         public static List<Point> ptCrossing = new List<Point>();
-        public static List<Point> ptUsecase_4A = new List<Point>();
-        public static List<Point> ptUsecase_4B = new List<Point>();
+        public static List<Point> ptTruck_GoingStraight = new List<Point>();
 
         static Geofence geofence;
         public static GPSData gpsData;
@@ -111,8 +109,7 @@ namespace CV2X_BackendGeofence
                 client.Settings.InflightQueueSize = 500;
                 Console.WriteLine("Connecting to  MQTT Server," + host + ":" + port + "....");
                 client.Connect(Guid.NewGuid().ToString(), username, password);
-                //client.MqttMsgPublishReceived += new MqttClient.MqttMsgPublishEventHandler(client_MqttMsgPublishReceived);
-                client.MqttMsgPublishReceived += new MqttClient.MqttMsgPublishEventHandler(client_MqttMsgPublishReceived2);
+                client.MqttMsgPublishReceived += new MqttClient.MqttMsgPublishEventHandler(client_MqttMsgPublishReceived);
                 client.ConnectionClosed += new MqttClient.ConnectionClosedEventHandler(client_ConnectionClosed);
                 if (client.IsConnected)
                 {
@@ -174,75 +171,60 @@ namespace CV2X_BackendGeofence
                   (getDistance(ptHotspot.First().X, ptHotspot.First().Y, pedestrian.Latitude, pedestrian.Longitude) < radius))
             {
                 //load xml for car geofences
-                LoadXml("Car_Going_Left.xml", out ptCar_GoingLeft);
-                LoadXml("Car_Going_Right.xml", out ptCar_GoingRight);
-                LoadXml("Car_Going_Straight.xml", out ptCar_GoingStraight);
-                LoadXml("Yellowbox.xml", out ptCar_Yellowbox);
-                LoadXml("Car_Usecase_4(a).xml", out ptUsecase_4A);
-                LoadXml("Car_Usecase_4(b).xml", out ptUsecase_4B);
+                LoadXml("Science Park/Car_Going_Left.xml", out ptCar_GoingLeft);
+                LoadXml("Science Park/Car_Going_Right.xml", out ptCar_GoingRight);
+                LoadXml("Science Park/Car_Going_Straight.xml", out ptCar_GoingStraight);
+                LoadXml("Science Park/Truck_Going_Straight.xml", out ptTruck_GoingStraight);         
 
-                //check if car is going left
-                if (new Geofence(ptCar_GoingLeft).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
+                //check if car is turning right (Usecase 1 & 2)
+                if (new Geofence(ptCar_GoingRight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
                 {
-                    //load geofence for pedestrian going to traffic island and inside traffic island
-                    LoadXml("Ped_Going_TrafficIsland.xml", out ptGoingTrafficIsland);
-                    LoadXml("Ped_Traffic_Island.xml", out ptTrafficIsland);
+                    //load geofence for pedestrian crossing between two traffic islands
+                    LoadXml("Science Park/Ped_Traffic_Island.xml", out ptTrafficIsland);
 
-                    //check if pedestrian is inside the geofence going to traffic island
-                    if (new Geofence(ptGoingTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
+                    //check if pedestrian is inside the geofence between two traffic island (Usecase 1)
+                    if (new Geofence(ptTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
                     {
                         collisionData.CollisionStatus = 1;
                     }
-                    //check if pedestrian is inside the traffic island
-                    else if (new Geofence(ptTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
+                    //check if truck is going straight while car is turning right (Usecase 2)
+                    else if (new Geofence(ptCar_GoingStraight).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
                     {
                         collisionData.CollisionStatus = 2;
-                    }
+                    }                
                 }
-                //check if car is going right, going straight or inside yellowbox
-                else if (new Geofence(ptCar_GoingRight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) ||
-                        new Geofence(ptCar_GoingStraight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) ||
-                        new Geofence(ptCar_Yellowbox).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
-                {
-                    //load the xml file for pedestrian inside the traffic island and pedestrian crossing geofence
-                    LoadXml("Ped_Traffic_Island.xml", out ptTrafficIsland);
-                    LoadXml("Pedestrian_Crossing.xml", out ptCrossing);
 
-                    //check if car is going right & pedestrian is crossing
-                    if (new Geofence(ptCar_GoingRight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
+                //check if car is going straight (Usecase 3)
+                else if (new Geofence(ptCar_GoingStraight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
+                {
+                    //load the xml file for pedestrian crossing geofence
+                    LoadXml("Science Park/Ped_Crossing.xml", out ptCrossing);
+
+                    //check if car is going straight & pedestrian is crossing
+                    if (new Geofence(ptCar_GoingStraight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
                         new Geofence(ptCrossing).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
                     {
                         collisionData.CollisionStatus = 3;
-                    }
+                    }                
+                }
+                //check if Car it turning Left (Usecase 4 & 5)
+                else if (new Geofence(ptCar_GoingLeft).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
+                {
+                    //load the xml file for pedestrian going to traffic island geofence
+                    LoadXml("Science Park/Ped_Going_TrafficIsland.xml", out ptGoingTrafficIsland);
 
-                    //check if car is going straight and truck is turning left
-                    else if (new Geofence(ptCar_GoingStraight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
-                             new Geofence(ptCar_GoingLeft).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
+                    //Check if car is turning left & pedestrian is crossing to traffic island (Usecase 4)
+                    if (new Geofence(ptCar_GoingLeft).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
+                        new Geofence(ptGoingTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
                     {
                         collisionData.CollisionStatus = 4;
                     }
 
-                    //check if car is going straight & pedestrian is inside traffic island
-                    else if (new Geofence(ptCar_GoingStraight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
-                        new Geofence(ptTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
+                    //Check if car is turning left & truck is approaching (Usecase 5)
+                    if (new Geofence(ptCar_GoingLeft).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
+                        new Geofence(ptTruck_GoingStraight).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
                     {
                         collisionData.CollisionStatus = 5;
-                    }
-
-                    //check if car is going straight & pedestrian is crossing
-                    else if (new Geofence(ptCar_GoingStraight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
-                        new Geofence(ptCrossing).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                    {
-                        collisionData.CollisionStatus = 5;
-                    }                
-                }
-                //check for usecase scenario 4(Truck turning right while vehicle approcahing)
-                else if (new Geofence(ptUsecase_4A).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
-                {
-                    if (new Geofence(ptUsecase_4A).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
-                        new Geofence(ptUsecase_4B).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                    {
-                        collisionData.CollisionStatus = 6;
                     }
                 }
 
@@ -265,174 +247,6 @@ namespace CV2X_BackendGeofence
         }
 
         private void client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
-        {
-            if (String.Equals(e.Topic, "RTCU"))
-            {
-                try
-                {
-                    gpsData = GPSData.Parser.ParseFrom(e.Message);
-
-                    if (gpsData.VehicleType == 0)       //vehicle
-                    {
-                        vehicle.Latitude = gpsData.Latitude;
-                        vehicle.Longitude = gpsData.Longitude;
-                        vehicle.Id = gpsData.Id;
-
-                        //check if vehicle is inside the 200m radius Geofence
-                        if (getDistance(ptHotspot[0].X, ptHotspot[0].Y, vehicle.Latitude, vehicle.Longitude) < radius)
-                        {
-                            //load xml for vehicle geofences
-                            LoadXml("Car_Going_Left.xml", out ptCar_GoingLeft);
-                            LoadXml("Car_Going_Right.xml", out ptCar_GoingRight);
-                            LoadXml("Car_Going_Straight.xml", out ptCar_GoingStraight);
-                            LoadXml("Yellowbox.xml", out ptCar_Yellowbox);
-
-                            //ckeck if car is going left
-                            if (new Geofence(ptCar_GoingLeft).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
-                            {
-                                //load the xml file for pedestrian going to traffic island and inside the traffic island geofence
-                                LoadXml("Ped_Going_TrafficIsland.xml", out ptGoingTrafficIsland);
-                                LoadXml("Ped_Traffic_Island.xml", out ptTrafficIsland);
-
-                                //check if pedestrian is inside the geofence going to traffic island
-                                if (new Geofence(ptGoingTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                                {
-                                }
-                                //check if pedestrian is inside the traffic island
-                                else if (new Geofence(ptTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                                {
-                                }
-                            }
-
-                            //check if car is going right, going straight or inside yellowbox
-                            else if ((new Geofence(ptCar_GoingRight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
-                                     || (new Geofence(ptCar_GoingStraight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
-                                     || (new Geofence(ptCar_Yellowbox).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude)))
-                            {
-                                //load the xml file for pedestrian inside the traffic island and pedestrian crossing geofence
-                                LoadXml("Ped_Traffic_Island.xml", out ptTrafficIsland);
-                                LoadXml("Pedestrian_Crossing.xml", out ptCrossing);
-
-                                //check if vehicle is going right & pedestrian is inside the traffic island
-                                if (new Geofence(ptCar_GoingRight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
-                                    new Geofence(ptTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                                {
-                                }
-                                //check if vehicle is going right & pedestrian is crossing
-                                else if (new Geofence(ptCar_GoingRight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
-                                    new Geofence(ptCrossing).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                                {
-                                }
-                                //check if vehicle is going straight & pedestrian is inside the traffic island
-                                else if (new Geofence(ptCar_GoingStraight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
-                                    new Geofence(ptTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                                {
-                                }
-                                //check if vehicle is going straight & pedestrian is crossing
-                                else if (new Geofence(ptCar_GoingStraight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
-                                    new Geofence(ptCrossing).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                                {
-                                }
-                                //check if vehicle is inside yellowbox & pedestrian is inside the traffic island
-                                else if (new Geofence(ptCar_Yellowbox).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
-                                    new Geofence(ptTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                                {
-                                }
-                                //check if vehicle is inside yellowbox & pedestrian is crossing
-                                else if (new Geofence(ptCar_Yellowbox).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude) &&
-                                    new Geofence(ptCrossing).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                                {
-                                }
-                            }
-                        }
-                    }
-
-                    else if (gpsData.VehicleType == 3)       //pedestrian
-                    {
-                        pedestrian.Latitude = gpsData.Latitude;
-                        pedestrian.Longitude = gpsData.Longitude;
-                        pedestrian.Id = gpsData.Id;
-
-                        if (getDistance(ptHotspot[0].X, ptHotspot[0].Y, pedestrian.Latitude, pedestrian.Longitude) < radius)
-                        {
-                            //load xml for pedestrian geofences
-                            LoadXml("Ped_Going_TrafficIsland-1.xml", out ptGoingTrafficIsland);
-                            LoadXml("Pedestrian_Crossing.xml", out ptCrossing);
-                            LoadXml("Ped_Traffic_Island.xml", out ptTrafficIsland);
-
-                            //check if the pedestrian in inside the geofence going to traffic island
-                            if (new Geofence(ptGoingTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                            {
-                                //load car going left geofence
-                                LoadXml("Car_Going_Left.xml", out ptCar_GoingLeft);
-
-                                //check if car is inside the geofence going left
-                                if (new Geofence(ptCar_GoingLeft).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
-                                {
-                                }
-                            }
-                            //check if pedestrian is inside the pedestrian crossing geofence
-                            else if (new Geofence(ptCrossing).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                            {
-                                //load car geofences for cars going right, going straight, & inside yellowbox
-                                LoadXml("Car_Going_Right.xml", out ptCar_GoingRight);
-                                LoadXml("Car_Going_Straight.xml", out ptCar_GoingStraight);
-                                LoadXml("Yellowbox.xml", out ptCar_Yellowbox);
-
-                                //check if car is inside going right geofence
-                                if (new Geofence(ptCar_GoingRight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
-                                {
-                                }
-                                //check if car is inside the going straight geofence
-                                else if (new Geofence(ptCar_GoingStraight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
-                                {
-                                }
-                                //check if car is inside yellowbox
-                                else if (new Geofence(ptCar_Yellowbox).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
-                                {
-                                }
-                            }
-                            //check if pedestrian is inside the traffic island
-                            else if (new Geofence(ptTrafficIsland).IsInsideGeofence2(pedestrian.Latitude, pedestrian.Longitude))
-                            {
-                                //load car geofences for cars going left, going right, going straight, & inside yellowbox
-                                LoadXml("Car_Going_Left.xml", out ptCar_GoingLeft);
-                                LoadXml("Car_Going_Right.xml", out ptCar_GoingRight);
-                                LoadXml("Car_Going_Straight.xml", out ptCar_GoingStraight);
-                                LoadXml("Yellowbox.xml", out ptCar_Yellowbox);
-
-                                //check if car is inside going left geofence                            
-                                if (new Geofence(ptCar_GoingLeft).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
-                                {
-                                }
-                                //check if car is inside going right geofence
-                                else if (new Geofence(ptCar_GoingRight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
-                                {
-                                }
-                                //check if car is inside the going straight geofence
-                                else if (new Geofence(ptCar_GoingStraight).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
-                                {
-                                }
-                                //check if car is inside yellowbox
-                                else if (new Geofence(ptCar_Yellowbox).IsInsideGeofence2(vehicle.Latitude, vehicle.Longitude))
-                                {
-                                }
-                            }
-                        }
-                    }
-                    var msg = "IN";
-                    var mClient = sender as MqttClient;
-
-                    mClient.Publish("geofence", Encoding.ASCII.GetBytes(msg));
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-            }
-        }
-
-        private void client_MqttMsgPublishReceived2(object sender, MqttMsgPublishEventArgs e)
         {
             if (String.Equals(e.Topic, "RTCU"))
             {
@@ -482,7 +296,7 @@ namespace CV2X_BackendGeofence
                 try
                 {
                     client.Connect(Guid.NewGuid().ToString(), username, password);
-                    client.MqttMsgPublishReceived += new MqttClient.MqttMsgPublishEventHandler(client_MqttMsgPublishReceived2);
+                    client.MqttMsgPublishReceived += new MqttClient.MqttMsgPublishEventHandler(client_MqttMsgPublishReceived);
                     client.ConnectionClosed += new MqttClient.ConnectionClosedEventHandler(client_ConnectionClosed);
                     if (client.IsConnected)
                     {
@@ -599,7 +413,7 @@ namespace CV2X_BackendGeofence
 
         static void Main(string[] args)
         {
-            LoadXml("Hotspot.xml", out ptHotspot);
+            LoadXml("Science Park/Hotspot.xml", out ptHotspot);
             Program p = new Program();
             p.InitProtobuf();
             p.InitMQTT();

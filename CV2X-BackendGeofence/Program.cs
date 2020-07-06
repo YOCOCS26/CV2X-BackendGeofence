@@ -148,20 +148,27 @@ namespace CV2X_BackendGeofence
                 {
                     collisionDetailsV2X.CollisionDetectionFlag = 1;
                     collisionDetailsV2X.AlertType = 4;
+                    client.Publish("seathaptic", Encoding.UTF8.GetBytes("ON"), 0, false);
                 }
                 else if (collisionDistance <= collisionDetailsV2X.AlertWARNRadius)
                 {
                     collisionDetailsV2X.CollisionDetectionFlag = 1;
                     collisionDetailsV2X.AlertType = 3;
+                    client.Publish("seathaptic", Encoding.UTF8.GetBytes("ON"), 0, false);
                 }
                 else if (collisionDistance <= collisionDetailsV2X.AlertINFORadius)
                 {
                     collisionDetailsV2X.CollisionDetectionFlag = 1;
                     collisionDetailsV2X.AlertType = 2;
+                    client.Publish("seathaptic", Encoding.UTF8.GetBytes("OFF"), 0, false);
                 }
-            }        
+            }
+            else
+            {
+                client.Publish("seathaptic", Encoding.UTF8.GetBytes("OFF"), 0, false);
+            }    
 
-            client.Publish(collisionTopic, collisionDetailsV2X.ToByteArray(), (byte)0, false);
+            client.Publish(collisionTopic, collisionDetailsV2X.ToByteArray(), (byte)0, false);            
         }
 
         public void CheckCollision()
@@ -380,7 +387,7 @@ namespace CV2X_BackendGeofence
                 {
                     Console.WriteLine("Loop: " + loopCntr++ + " ------waiting for Car data from MQTT------");
                 }
-                else if (mqttPedCntr > 5)
+                if (mqttPedCntr > 5)
                 {
                     Console.WriteLine("Loop: " + loopCntr++ + " ------waiting for pedestrian data from MQTT------");
                 }

@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option java_package = "protobuf";
+
+option java_outer_classname = "DispatchSystemProto";
+
+message DispatchData{   
+    string busstop_id = 1;
+    double busstop_lat = 2;
+    double busstop_lon = 3;
+    int32 zone_radius = 4;
+    int32 time_inside_zone = 5;
+	int32 time_outside_zone = 6;
+    int32 bus_number = 7;
+    uint64 est_arrival_time = 8;   
+    int32 num_of_commuters = 9;
+    int32 timer_threshold = 10;
+    int32 commuter_threshold = 11;
+	bool is_inside_zone = 12;
+}

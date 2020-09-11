@@ -46,10 +46,14 @@ namespace CV2X_BackendGeofence
         public static List<Point> ptCrossing = new List<Point>();
         public static List<Point> ptTruck_GoingStraight = new List<Point>();
 
+        public static List<Point> ptBusStop = new List<Point>();
+        public static List<int> iBusStopId = new List<int>();
+
         static Geofence geofence;
         public static GPSData gpsData;
         public static CollisionData collisionData;
         public static CollisionDetails collisionDetailsV2X;
+        public static DispatchData dispatchDetails;
 
         /***************MQTT Broker Details*******************/
         public static MqttClient client;
@@ -62,13 +66,17 @@ namespace CV2X_BackendGeofence
         /***************MQTT Publish Details******************/
         public static string topic = "cv2x";
         public static string collisionTopic = "VehicleCollisionData";
+        public static string dispatchTopic = "DispatchResult";
 
         public const int radius = 200;
 
         public static GeoLocation vehicle;
         public static GeoLocation pedestrian;
 
+        public static List<BusStopDetails> busStopDetails = new List<BusStopDetails>();
+
         public static System.Timers.Timer tmr;
+        public static System.Timers.Timer tmrDispatch;
         public static int loopCntr = 0;
         public static int mqttCarCntr = 0;
         public static int mqttPedCntr = 0;
@@ -78,6 +86,12 @@ namespace CV2X_BackendGeofence
             public double Latitude { get; set; }
             public double Longitude { get; set; }
             public string Id { get; set; }
+        }
+
+        public class BusStopDetails
+        {
+            public int counter { get; set; }
+            public int reset { get; set; }
         }
 
         public static void LoadXml(string filename, out List<Point> listPts)
@@ -98,6 +112,31 @@ namespace CV2X_BackendGeofence
                 p.Y = Double.Parse(lon);
 
                 listPts.Add(p);
+            }
+        }
+
+        public static void LoadBusStop(string filename, out List<Point> listBusStop, out List<int> busstopId)
+        {
+            DataSet ds = new DataSet();
+            ds.ReadXml(filename);
+
+            listBusStop = new List<Point>();
+            busstopId = new List<int>();
+
+            foreach (DataRow dr in ds.Tables[0].Rows)
+            {
+                Point p = new Point();
+
+                String lat = dr[0].ToString();
+                p.X = Double.Parse(lat);
+
+                String lon = dr[1].ToString();
+                p.Y = Double.Parse(lon);
+
+                listBusStop.Add(p);
+
+                int id = Int32.Parse(dr[2].ToString());
+                busstopId.Add(id);
             }
         }
 
@@ -358,6 +397,20 @@ namespace CV2X_BackendGeofence
             collisionDetailsV2X.SourceVehicleId = "";
             collisionDetailsV2X.TargetVehicleId = "";
 
+            dispatchDetails = new DispatchData();
+            dispatchDetails.BusstopId = "60011";
+            dispatchDetails.BusstopLat = ptBusStop.First().X;
+            dispatchDetails.BusstopLon = ptBusStop.First().Y;
+            dispatchDetails.ZoneRadius = 15;
+            dispatchDetails.TimeInsideZone = 0;
+            dispatchDetails.TimeOutsideZone = 10;
+            dispatchDetails.BusNumber = 0;
+            dispatchDetails.EstArrivalTime = 0;
+            dispatchDetails.NumOfCommuters = 0;
+            dispatchDetails.TimerThreshold = 30;
+            dispatchDetails.CommuterThreshold = 1;
+            dispatchDetails.IsInsideZone = false;
+
             vehicle = new GeoLocation();
             vehicle.Latitude = 0;
             vehicle.Longitude = 0;
@@ -366,6 +419,15 @@ namespace CV2X_BackendGeofence
             pedestrian.Latitude = 0;
             pedestrian.Longitude = 0;
             pedestrian.Id = null;
+
+            for (int i = 0; i < iBusStopId.Count; i++)
+            {              
+                busStopDetails.Add(new BusStopDetails
+                {
+                    reset = 0,
+                    counter = 0
+                });         
+            }          
         }
 
         public void InitTimer()
@@ -374,6 +436,49 @@ namespace CV2X_BackendGeofence
             tmr.AutoReset = true;
             tmr.Elapsed += Tmr_Elapsed;
             tmr.Enabled = true;
+
+            tmrDispatch = new System.Timers.Timer(1000);
+            tmrDispatch.AutoReset = true;
+            tmrDispatch.Elapsed += tmrDispatch_Elapsed;
+            tmrDispatch.Enabled = true;
+        }
+
+        private void tmrDispatch_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            if (pedestrian.Id != null)
+            {
+                for (int i = 0; i < iBusStopId.Count - 1; i++)
+                {
+                    if (getDistance(ptBusStop[i].X, ptBusStop[i].Y, pedestrian.Latitude, pedestrian.Longitude) < dispatchDetails.ZoneRadius)
+                    {
+                        dispatchDetails.BusstopId = iBusStopId[i].ToString();
+                        dispatchDetails.BusstopLat = ptBusStop[i].X;
+                        dispatchDetails.BusstopLon = ptBusStop[i].Y;
+                        busStopDetails[i].counter++;
+                        busStopDetails[i].reset = 0;                       
+
+                        if (busStopDetails[i].counter >= dispatchDetails.TimerThreshold)
+                        {
+                            busStopDetails[i].counter = dispatchDetails.TimerThreshold;
+                            dispatchDetails.NumOfCommuters = 1;
+                            dispatchDetails.IsInsideZone = true;
+                        }
+                    }
+                    else
+                    {
+                        busStopDetails[i].reset++;
+
+                        if (busStopDetails[i].reset > dispatchDetails.TimeOutsideZone)
+                        {
+                            busStopDetails[i].counter = 0;
+                            dispatchDetails.IsInsideZone = false;
+                            dispatchDetails.NumOfCommuters = 0;
+                        }
+                    }
+                    dispatchDetails.TimeInsideZone = busStopDetails[i].counter;
+                    client.Publish(dispatchTopic, dispatchDetails.ToByteArray(), (byte)0, false);
+                }
+            }
         }
 
         private void Tmr_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
@@ -421,6 +526,8 @@ namespace CV2X_BackendGeofence
         static void Main(string[] args)
         {
             LoadXml("Science Park/Hotspot.xml", out ptHotspot);
+            LoadBusStop("BusStop.xml", out ptBusStop, out iBusStopId);
+
             Program p = new Program();
             p.InitProtobuf();
             p.InitMQTT();

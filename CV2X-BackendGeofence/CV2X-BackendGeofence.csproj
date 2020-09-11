@@ -68,6 +68,7 @@
   <ItemGroup>
     <Compile Include="CollisionDetails.cs" />
     <Compile Include="CollisionDetailsV2X.cs" />
+    <Compile Include="DispatchSystem.cs" />
     <Compile Include="Geofence.cs" />
     <Compile Include="GPSDetails.cs" />
     <Compile Include="Program.cs" />

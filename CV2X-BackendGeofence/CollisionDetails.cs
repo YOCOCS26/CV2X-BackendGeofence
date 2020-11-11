@@ -22,14 +22,15 @@ public static partial class CollisionDetailsReflection {
   static CollisionDetailsReflection() {
     byte[] descriptorData = global::System.Convert.FromBase64String(
         string.Concat(
-          "ChZDb2xsaXNpb25EZXRhaWxzLnByb3RvImYKDUNvbGxpc2lvbkRhdGESEgoK",
-          "dmVoaWNsZV9pZBgBIAEoCRIVCg1wZWRlc3RyaWFuX2lkGAIgASgJEhgKEGNv",
-          "bGxpc2lvbl9zdGF0dXMYAyABKAUSEAoIZGlzdGFuY2UYBCABKAFCHAoIcHJv",
-          "dG9idWZCEENvbGxpc2lvbkRldGFpbHNiBnByb3RvMw=="));
+          "ChZDb2xsaXNpb25EZXRhaWxzLnByb3RvIoMBCg1Db2xsaXNpb25EYXRhEhIK",
+          "CnZlaGljbGVfaWQYASABKAkSFQoNcGVkZXN0cmlhbl9pZBgCIAEoCRIYChBj",
+          "b2xsaXNpb25fc3RhdHVzGAMgASgFEhAKCGRpc3RhbmNlGAQgASgBEhsKE3Bl",
+          "ZGVzdHJpYW5fcG9zaXRpb24YBSABKAVCHAoIcHJvdG9idWZCEENvbGxpc2lv",
+          "bkRldGFpbHNiBnByb3RvMw=="));
     descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
         new pbr::FileDescriptor[] { },
         new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-          new pbr::GeneratedClrTypeInfo(typeof(global::CollisionData), global::CollisionData.Parser, new[]{ "VehicleId", "PedestrianId", "CollisionStatus", "Distance" }, null, null, null, null)
+          new pbr::GeneratedClrTypeInfo(typeof(global::CollisionData), global::CollisionData.Parser, new[]{ "VehicleId", "PedestrianId", "CollisionStatus", "Distance", "PedestrianPosition" }, null, null, null, null)
         }));
   }
   #endregion
@@ -65,6 +66,7 @@ public sealed partial class CollisionData : pb::IMessage<CollisionData> {
     pedestrianId_ = other.pedestrianId_;
     collisionStatus_ = other.collisionStatus_;
     distance_ = other.distance_;
+    pedestrianPosition_ = other.pedestrianPosition_;
     _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
   }
 
@@ -117,6 +119,17 @@ public sealed partial class CollisionData : pb::IMessage<CollisionData> {
     }
   }
 
+  /// <summary>Field number for the "pedestrian_position" field.</summary>
+  public const int PedestrianPositionFieldNumber = 5;
+  private int pedestrianPosition_;
+  [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+  public int PedestrianPosition {
+    get { return pedestrianPosition_; }
+    set {
+      pedestrianPosition_ = value;
+    }
+  }
+
   [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
   public override bool Equals(object other) {
     return Equals(other as CollisionData);
@@ -134,6 +147,7 @@ public sealed partial class CollisionData : pb::IMessage<CollisionData> {
     if (PedestrianId != other.PedestrianId) return false;
     if (CollisionStatus != other.CollisionStatus) return false;
     if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Distance, other.Distance)) return false;
+    if (PedestrianPosition != other.PedestrianPosition) return false;
     return Equals(_unknownFields, other._unknownFields);
   }
 
@@ -144,6 +158,7 @@ public sealed partial class CollisionData : pb::IMessage<CollisionData> {
     if (PedestrianId.Length != 0) hash ^= PedestrianId.GetHashCode();
     if (CollisionStatus != 0) hash ^= CollisionStatus.GetHashCode();
     if (Distance != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Distance);
+    if (PedestrianPosition != 0) hash ^= PedestrianPosition.GetHashCode();
     if (_unknownFields != null) {
       hash ^= _unknownFields.GetHashCode();
     }
@@ -173,6 +188,10 @@ public sealed partial class CollisionData : pb::IMessage<CollisionData> {
       output.WriteRawTag(33);
       output.WriteDouble(Distance);
     }
+    if (PedestrianPosition != 0) {
+      output.WriteRawTag(40);
+      output.WriteInt32(PedestrianPosition);
+    }
     if (_unknownFields != null) {
       _unknownFields.WriteTo(output);
     }
@@ -192,6 +211,9 @@ public sealed partial class CollisionData : pb::IMessage<CollisionData> {
     }
     if (Distance != 0D) {
       size += 1 + 8;
+    }
+    if (PedestrianPosition != 0) {
+      size += 1 + pb::CodedOutputStream.ComputeInt32Size(PedestrianPosition);
     }
     if (_unknownFields != null) {
       size += _unknownFields.CalculateSize();
@@ -215,6 +237,9 @@ public sealed partial class CollisionData : pb::IMessage<CollisionData> {
     }
     if (other.Distance != 0D) {
       Distance = other.Distance;
+    }
+    if (other.PedestrianPosition != 0) {
+      PedestrianPosition = other.PedestrianPosition;
     }
     _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
   }
@@ -241,6 +266,10 @@ public sealed partial class CollisionData : pb::IMessage<CollisionData> {
         }
         case 33: {
           Distance = input.ReadDouble();
+          break;
+        }
+        case 40: {
+          PedestrianPosition = input.ReadInt32();
           break;
         }
       }

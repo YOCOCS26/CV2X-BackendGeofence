@@ -7,20 +7,7 @@ namespace CV2X_BackendGeofence.UnitTests
     [TestClass]
     public class InsideGeofenceTest
     {
-        [TestMethod]
-        public void Geofence_InsidePedGOingTrafficIsland_ReturnsTrue()
-        {
-            StaticWrapper wrapper = new StaticWrapper();
-            wrapper.LoadXML();
-
-            double lat = 1.316660;
-            double lon = 103.862613;
-
-            var res = new Geofence(wrapper.ptGoingTrafficIsland).IsInsideGeofence2(lat, lon);
-
-            Assert.IsTrue(res);
-        }
-
+       
         [TestMethod]
         public void Geofence_InsidePedGOingTrafficIsland2_ReturnsTrue()
         {
@@ -69,8 +56,8 @@ namespace CV2X_BackendGeofence.UnitTests
             StaticWrapper wrapper = new StaticWrapper();
             wrapper.LoadXML();
 
-            double lat = 1.316735;
-            double lon = 103.862630;
+            double lat = 1.292072;
+            double lon = 103.784199;
 
             var res = new Geofence(wrapper.ptTrafficIsland).IsInsideGeofence2(lat, lon);
 
@@ -83,10 +70,24 @@ namespace CV2X_BackendGeofence.UnitTests
             StaticWrapper wrapper = new StaticWrapper();
             wrapper.LoadXML();
 
-            double lat = 1.316741;
-            double lon = 103.862563;
+            double lat = 1.292036;
+            double lon = 103.784183;
 
             var res = new Geofence(wrapper.ptTrafficIsland).IsInsideGeofence2(lat, lon);
+
+            Assert.IsTrue(res);
+        }
+
+        [TestMethod]
+        public void Geofence_CarTurningRight_ReturnsTrue()
+        {
+            StaticWrapper wrapper = new StaticWrapper();
+            wrapper.LoadXML();
+
+            double lat = 1.292065;
+            double lon = 103.783965;
+
+            var res = new Geofence(wrapper.ptCar_GoingRight).IsInsideGeofence2(lat, lon);
 
             Assert.IsTrue(res);
         }
@@ -97,10 +98,24 @@ namespace CV2X_BackendGeofence.UnitTests
             StaticWrapper wrapper = new StaticWrapper();
             wrapper.LoadXML();
 
-            double lat = 1.3166597;
-            double lon = 103.862469;
+            double lat = 1.291928;
+            double lon = 103.784069;
 
             var res = new Geofence(wrapper.ptCar_GoingLeft).IsInsideGeofence2(lat, lon);
+
+            Assert.IsTrue(res);
+        }
+
+        [TestMethod]
+        public void Geofence_InsidePedGOingTrafficIsland_ReturnsTrue()
+        {
+            StaticWrapper wrapper = new StaticWrapper();
+            wrapper.LoadXML();
+
+            double lat = 1.292068;
+            double lon = 103.784193;
+
+            var res = new Geofence(wrapper.ptGoingTrafficIsland).IsInsideGeofence2(lat, lon);
 
             Assert.IsTrue(res);
         }

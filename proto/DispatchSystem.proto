@@ -17,4 +17,7 @@ message DispatchData{
     int32 timer_threshold = 10;
     int32 commuter_threshold = 11;
 	bool is_inside_zone = 12;
+	double bus_lat = 13;
+	double bus_lon = 14;
+	string commuter_id = 15;
 }

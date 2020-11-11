@@ -22,19 +22,20 @@ public static partial class DispatchSystemReflection {
   static DispatchSystemReflection() {
     byte[] descriptorData = global::System.Convert.FromBase64String(
         string.Concat(
-          "ChREaXNwYXRjaFN5c3RlbS5wcm90byKrAgoMRGlzcGF0Y2hEYXRhEhIKCmJ1",
+          "ChREaXNwYXRjaFN5c3RlbS5wcm90byLiAgoMRGlzcGF0Y2hEYXRhEhIKCmJ1",
           "c3N0b3BfaWQYASABKAkSEwoLYnVzc3RvcF9sYXQYAiABKAESEwoLYnVzc3Rv",
           "cF9sb24YAyABKAESEwoLem9uZV9yYWRpdXMYBCABKAUSGAoQdGltZV9pbnNp",
           "ZGVfem9uZRgFIAEoBRIZChF0aW1lX291dHNpZGVfem9uZRgGIAEoBRISCgpi",
           "dXNfbnVtYmVyGAcgASgFEhgKEGVzdF9hcnJpdmFsX3RpbWUYCCABKAQSGAoQ",
           "bnVtX29mX2NvbW11dGVycxgJIAEoBRIXCg90aW1lcl90aHJlc2hvbGQYCiAB",
           "KAUSGgoSY29tbXV0ZXJfdGhyZXNob2xkGAsgASgFEhYKDmlzX2luc2lkZV96",
-          "b25lGAwgASgIQh8KCHByb3RvYnVmQhNEaXNwYXRjaFN5c3RlbVByb3RvYgZw",
-          "cm90bzM="));
+          "b25lGAwgASgIEg8KB2J1c19sYXQYDSABKAESDwoHYnVzX2xvbhgOIAEoARIT",
+          "Cgtjb21tdXRlcl9pZBgPIAEoCUIfCghwcm90b2J1ZkITRGlzcGF0Y2hTeXN0",
+          "ZW1Qcm90b2IGcHJvdG8z"));
     descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
         new pbr::FileDescriptor[] { },
         new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-          new pbr::GeneratedClrTypeInfo(typeof(global::DispatchData), global::DispatchData.Parser, new[]{ "BusstopId", "BusstopLat", "BusstopLon", "ZoneRadius", "TimeInsideZone", "TimeOutsideZone", "BusNumber", "EstArrivalTime", "NumOfCommuters", "TimerThreshold", "CommuterThreshold", "IsInsideZone" }, null, null, null, null)
+          new pbr::GeneratedClrTypeInfo(typeof(global::DispatchData), global::DispatchData.Parser, new[]{ "BusstopId", "BusstopLat", "BusstopLon", "ZoneRadius", "TimeInsideZone", "TimeOutsideZone", "BusNumber", "EstArrivalTime", "NumOfCommuters", "TimerThreshold", "CommuterThreshold", "IsInsideZone", "BusLat", "BusLon", "CommuterId" }, null, null, null, null)
         }));
   }
   #endregion
@@ -78,6 +79,9 @@ public sealed partial class DispatchData : pb::IMessage<DispatchData> {
     timerThreshold_ = other.timerThreshold_;
     commuterThreshold_ = other.commuterThreshold_;
     isInsideZone_ = other.isInsideZone_;
+    busLat_ = other.busLat_;
+    busLon_ = other.busLon_;
+    commuterId_ = other.commuterId_;
     _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
   }
 
@@ -218,6 +222,39 @@ public sealed partial class DispatchData : pb::IMessage<DispatchData> {
     }
   }
 
+  /// <summary>Field number for the "bus_lat" field.</summary>
+  public const int BusLatFieldNumber = 13;
+  private double busLat_;
+  [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+  public double BusLat {
+    get { return busLat_; }
+    set {
+      busLat_ = value;
+    }
+  }
+
+  /// <summary>Field number for the "bus_lon" field.</summary>
+  public const int BusLonFieldNumber = 14;
+  private double busLon_;
+  [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+  public double BusLon {
+    get { return busLon_; }
+    set {
+      busLon_ = value;
+    }
+  }
+
+  /// <summary>Field number for the "commuter_id" field.</summary>
+  public const int CommuterIdFieldNumber = 15;
+  private string commuterId_ = "";
+  [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+  public string CommuterId {
+    get { return commuterId_; }
+    set {
+      commuterId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+    }
+  }
+
   [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
   public override bool Equals(object other) {
     return Equals(other as DispatchData);
@@ -243,6 +280,9 @@ public sealed partial class DispatchData : pb::IMessage<DispatchData> {
     if (TimerThreshold != other.TimerThreshold) return false;
     if (CommuterThreshold != other.CommuterThreshold) return false;
     if (IsInsideZone != other.IsInsideZone) return false;
+    if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(BusLat, other.BusLat)) return false;
+    if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(BusLon, other.BusLon)) return false;
+    if (CommuterId != other.CommuterId) return false;
     return Equals(_unknownFields, other._unknownFields);
   }
 
@@ -261,6 +301,9 @@ public sealed partial class DispatchData : pb::IMessage<DispatchData> {
     if (TimerThreshold != 0) hash ^= TimerThreshold.GetHashCode();
     if (CommuterThreshold != 0) hash ^= CommuterThreshold.GetHashCode();
     if (IsInsideZone != false) hash ^= IsInsideZone.GetHashCode();
+    if (BusLat != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(BusLat);
+    if (BusLon != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(BusLon);
+    if (CommuterId.Length != 0) hash ^= CommuterId.GetHashCode();
     if (_unknownFields != null) {
       hash ^= _unknownFields.GetHashCode();
     }
@@ -322,6 +365,18 @@ public sealed partial class DispatchData : pb::IMessage<DispatchData> {
       output.WriteRawTag(96);
       output.WriteBool(IsInsideZone);
     }
+    if (BusLat != 0D) {
+      output.WriteRawTag(105);
+      output.WriteDouble(BusLat);
+    }
+    if (BusLon != 0D) {
+      output.WriteRawTag(113);
+      output.WriteDouble(BusLon);
+    }
+    if (CommuterId.Length != 0) {
+      output.WriteRawTag(122);
+      output.WriteString(CommuterId);
+    }
     if (_unknownFields != null) {
       _unknownFields.WriteTo(output);
     }
@@ -365,6 +420,15 @@ public sealed partial class DispatchData : pb::IMessage<DispatchData> {
     }
     if (IsInsideZone != false) {
       size += 1 + 1;
+    }
+    if (BusLat != 0D) {
+      size += 1 + 8;
+    }
+    if (BusLon != 0D) {
+      size += 1 + 8;
+    }
+    if (CommuterId.Length != 0) {
+      size += 1 + pb::CodedOutputStream.ComputeStringSize(CommuterId);
     }
     if (_unknownFields != null) {
       size += _unknownFields.CalculateSize();
@@ -412,6 +476,15 @@ public sealed partial class DispatchData : pb::IMessage<DispatchData> {
     }
     if (other.IsInsideZone != false) {
       IsInsideZone = other.IsInsideZone;
+    }
+    if (other.BusLat != 0D) {
+      BusLat = other.BusLat;
+    }
+    if (other.BusLon != 0D) {
+      BusLon = other.BusLon;
+    }
+    if (other.CommuterId.Length != 0) {
+      CommuterId = other.CommuterId;
     }
     _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
   }
@@ -470,6 +543,18 @@ public sealed partial class DispatchData : pb::IMessage<DispatchData> {
         }
         case 96: {
           IsInsideZone = input.ReadBool();
+          break;
+        }
+        case 105: {
+          BusLat = input.ReadDouble();
+          break;
+        }
+        case 113: {
+          BusLon = input.ReadDouble();
+          break;
+        }
+        case 122: {
+          CommuterId = input.ReadString();
           break;
         }
       }

@@ -9,4 +9,5 @@ message CollisionData{
     string pedestrian_id = 2;
     int32 collision_status = 3;
     double distance = 4;
+	int32 pedestrian_position = 5;
 }
